@@ -15,7 +15,7 @@ from pymodbus.exceptions import ModbusException
 # --- 配置常量 ---
 SERIAL_PORT = '/dev/ttyUSB0'  # 修改为你的实际串口
 #SERIAL_PORT = 'COM3'       # Windows 示例
-SLAVE_ID = 2              # OHand 的 Modbus 从站地址
+SLAVE_ID = 2             # OHand 的 Modbus 从站地址
 JSON_FILE = 'ohand_positions_f9.json' # 保存位置的文件名 (更新文件名以示区别)
 CONTROL_STEP = 1000         # 每次按键移动的逻辑位置步长 (0-65535)
 MAX_POS = 65535             # 最大逻辑位置

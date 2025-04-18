@@ -7,6 +7,7 @@ import numpy as np
 import math
 import time
 import traceback
+from camera.orbbec_camera import OrbbecCamera, get_serial_numbers
 
 # --- 导入 Orbbec Camera 模块 ---
 try:

@@ -821,7 +821,7 @@ if __name__ == "__main__":
         print("\n--- 控制示例 ---")
         # 示例：设置食指速度为 10000
         print("设置食指速度为 10000...")
-        if hand.set_finger_speed(FINGER_INDEX, 10000):
+        if hand.set_finger_speed(FINGER_INDEX, 65535):
             print("设置成功。")
         else:
             print("设置失败。")
