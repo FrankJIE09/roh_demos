@@ -5,9 +5,9 @@ from cvzone.HandTrackingModule import HandDetector
 from pymodbus import FramerType
 from pymodbus.client import ModbusSerialClient
 
-
-COM_PORT = "COM4"
-NODE_ID = 2
+# ROHand configuration
+COM_PORT = "/dev/ttyUSB0"
+NODE_ID = [2] # Support multiple nodes
 
 file_path = os.path.abspath(os.path.dirname(__file__))
 

@@ -12,7 +12,7 @@ from pymodbus.client import ModbusSerialClient
 from roh_registers_v1 import *
 
 # ROHand configuration
-COM_PORT = "COM7"
+COM_PORT = "/dev/ttyUSB0"
 NODE_ID = [2] # Support multiple nodes
 WITH_LODE = True # Choose with load or without load
 TIME_DELAY = 1.5
