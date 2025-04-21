@@ -1,26 +1,30 @@
 {
     "Index Bend": {
-        "min": 1.72,
-        "max": 69.47
+        "min": 3.57,
+        "max": 156.24
     },
     "Middle Bend": {
-        "min": 4.35,
-        "max": 85.7
+        "min": 4.51,
+        "max": 163.87
     },
     "Ring Bend": {
-        "min": 5.25,
-        "max": 90.53
+        "min": 4.56,
+        "max": 169.1
     },
     "Pinky Bend": {
-        "min": 4.14,
-        "max": 66.91
+        "min": 6.08,
+        "max": 156.52
     },
     "Thumb Bend": {
-        "min": 1.97,
-        "max": 42.37
+        "min": 4.4,
+        "max": 95.38
     },
     "Thumb Rotation": {
-        "min": 17.94,
-        "max": 57.35
+        "min": 18.71,
+        "max": 21.44
+    },
+    "Thumb Rotation Left": {
+    "min": -23.71,
+    "max": -18.44
     }
 }
