@@ -1,0 +1,30 @@
+{
+    "Index Bend": {
+        "min": 3.57,
+        "max": 156.24
+    },
+    "Middle Bend": {
+        "min": 4.51,
+        "max": 163.87
+    },
+    "Ring Bend": {
+        "min": 4.56,
+        "max": 169.1
+    },
+    "Pinky Bend": {
+        "min": 6.08,
+        "max": 156.52
+    },
+    "Thumb Bend": {
+        "min": 4.4,
+        "max": 95.38
+    },
+    "Thumb Rotation": {
+        "min": 18.71,
+        "max": 21.44
+    },
+    "Thumb Rotation Left": {
+    "min": -23.71,
+    "max": -18.44
+    }
+}
