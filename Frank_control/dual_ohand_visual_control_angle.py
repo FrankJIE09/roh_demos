@@ -54,8 +54,8 @@ OHAND_BAUDRATE = 115200             # Modbus Baudrate for OHand
 # OHand Logical Position Range
 OHAND_POS_OPEN = 0       # Logical position value when fingers are fully open
 OHAND_POS_CLOSED = 65535  # Logical position value when fingers are fully closed
-OHAND_THUMB_ROT_MIN = 65535     # Logical position for one limit of thumb rotation
-OHAND_THUMB_ROT_MAX = 0 # Logical position for the other limit of thumb rotation
+OHAND_THUMB_ROT_MIN = 0     # Logical position for one limit of thumb rotation
+OHAND_THUMB_ROT_MAX = 65535 # Logical position for the other limit of thumb rotation
 
 # --- Default Input Angle Range Constants (Fallback if JSON loading fails) ---
 DEFAULT_ANGLE_RANGES = {
