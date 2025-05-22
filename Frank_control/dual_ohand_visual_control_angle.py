@@ -493,7 +493,7 @@ def main():
         print("Cleaning up...")
         if camera:
             try:
-                camera.stop_stream()
+                camera.stop()
                 print("Cam stream stopped.")
             except Exception as e: (
                 print(f"Error stopping cam: {e}"))
@@ -506,8 +506,8 @@ def main():
             try:
                 cfg_cl = interface_cleanup['config'];
                 client_cl = interface_cleanup['client']
-                s_o = (cfg_cl.get('finger_bend_range', [0, 0])[0] + cfg_cl.get('finger_bend_range', [0, 0])[1]) / 15
-                m_r = (cfg_cl.get('thumb_rot_range', [-45, 45])[0] + cfg_cl.get('thumb_rot_range', [-45, 45])[1]) / 2
+                s_o = 180
+                m_r = 0
                 client_cl.set_finger_target_angle(FINGER_THUMB_BEND, s_o);
                 client_cl.set_finger_target_angle(FINGER_INDEX, s_o)
                 client_cl.set_finger_target_angle(FINGER_MIDDLE, s_o);
