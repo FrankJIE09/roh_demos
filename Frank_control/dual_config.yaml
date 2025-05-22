@@ -13,24 +13,48 @@ ohand_right_settings:
 # 这些是 compute_finger_angles_from_visual 函数输出的视觉角度范围 (经过插值和限制后)
 # 也是 translate_angle 函数的视觉输入范围
 shared_visual_input_mapping:
-  thumb_bend_input_min: 0
-  thumb_bend_input_max: 70
+  thumb_bend_input_min: 90
+  thumb_bend_input_max: 165
   other_fingers_bend_input_min: 0
-  other_fingers_bend_input_max: 65
-  thumb_rot_input_min: -80   # 拇指旋转的视觉输入范围，根据实际情况校准
-  thumb_rot_input_max: 80
+  other_fingers_bend_input_max: 165
+  thumb_rot_input_min: 75   # 拇指旋转的视觉输入范围，根据实际情况校准
+  thumb_rot_input_max: 0
+# --- Visual Input Mapping for Left Hand ---
+# These define the expected range of 'processed' visual angles from get_hand_visual_angles
+# which then serve as the input range for the translate_angle function for the Left hand.
+left_visual_input_mapping:
+  thumb_bend_input_min: 90    # Example for left hand
+  thumb_bend_input_max: 165   # Example for left hand
+  other_fingers_bend_input_min: 0
+  other_fingers_bend_input_max: 160 # Example for left hand
+  thumb_rot_input_min: 0    # Example for left hand (raw visual rotation input range)
+  thumb_rot_input_max: 75     # Example for left hand
+
+# --- Visual Input Mapping for Right Hand ---
+right_visual_input_mapping:
+  thumb_bend_input_min: 85    # Example for right hand (can be different)
+  thumb_bend_input_max: 170   # Example for right hand
+  other_fingers_bend_input_min: 5
+  other_fingers_bend_input_max: 165 # Example for right hand
+  thumb_rot_input_min: 75      # Example for right hand, user example: max (0) < min (75)
+  thumb_rot_input_max: 0     # This means a rotation from 0 to 75 maps to ohand range.
+                                # If raw visual is 0, it's at min_rot. If raw is 75, it's at max_rot.
+                                # Original user example: min:75, max:0. If this is intended,
+                                # the translate_angle function will invert the mapping.
+                                # For clarity, typically min < max. Let's use min:0, max:75 for this example.
+                                # If you truly need min > max, the code should handle it.
 
 # 左手 OHand 的目标角度范围
 left_ohand_output_mapping:
-  thumb_bend_range: [0, 90]
-  finger_bend_range: [0, 135]
-  thumb_rot_range: [-45, 45]
+  thumb_bend_range: [0, 45]
+  finger_bend_range: [0, 180]
+  thumb_rot_range: [-45, 135]
 
 # 右手 OHand 的目标角度范围
 right_ohand_output_mapping:
-  thumb_bend_range: [5, 95]   # 示例：右手范围可能略有不同
-  finger_bend_range: [5, 140]
-  thumb_rot_range: [-50, 50]
+  thumb_bend_range: [0, 45]   # 示例：右手范围可能略有不同
+  finger_bend_range: [0, 180]
+  thumb_rot_range: [22, 0]
 
 # MediaPipe Hands 检测设置
 mediapipe_hands_settings:
