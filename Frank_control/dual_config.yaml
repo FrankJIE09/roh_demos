@@ -1,0 +1,47 @@
+# OHand 机械手连接设置
+ohand_left_settings:
+  serial_port: '/dev/ttyUSB0'  # 左手 OHand 连接的串口号 (示例)
+  slave_id: 2                 # 左手 OHand 的 Modbus 从站 ID (示例)
+  enabled: true               # 是否启用左手控制
+
+ohand_right_settings:
+  serial_port: '/dev/ttyUSB1' # 右手 OHand 连接的串口号 (示例)
+  slave_id: 2                 # 右手 OHand 的 Modbus 从站 ID (示例)
+  enabled: true               # 是否启用右手控制
+
+# 共享的视觉角度到 OHand 角度的映射参数
+# 这些是 compute_finger_angles_from_visual 函数输出的视觉角度范围 (经过插值和限制后)
+# 也是 translate_angle 函数的视觉输入范围
+shared_visual_input_mapping:
+  thumb_bend_input_min: 0
+  thumb_bend_input_max: 70
+  other_fingers_bend_input_min: 0
+  other_fingers_bend_input_max: 65
+  thumb_rot_input_min: -80   # 拇指旋转的视觉输入范围，根据实际情况校准
+  thumb_rot_input_max: 80
+
+# 左手 OHand 的目标角度范围
+left_ohand_output_mapping:
+  thumb_bend_range: [0, 90]
+  finger_bend_range: [0, 135]
+  thumb_rot_range: [-45, 45]
+
+# 右手 OHand 的目标角度范围
+right_ohand_output_mapping:
+  thumb_bend_range: [5, 95]   # 示例：右手范围可能略有不同
+  finger_bend_range: [5, 140]
+  thumb_rot_range: [-50, 50]
+
+# MediaPipe Hands 检测设置
+mediapipe_hands_settings:
+  min_detection_confidence: 0.7 # 稍微降低以便更容易检测到双手
+  min_tracking_confidence: 0.6
+  max_num_hands: 2              # 关键：设置为2以检测两只手
+
+# Orbbec 摄像头设置
+orbbec_camera_settings:
+  serial_number: '' # 留空则自动检测第一个
+
+# 通用设置
+general_settings:
+  send_interval_seconds: 0.05 # 发送指令到 OHand 的时间间隔（秒）

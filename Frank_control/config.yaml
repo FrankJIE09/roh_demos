@@ -1,0 +1,33 @@
+# OHand 机械手连接设置
+ohand_settings:
+  serial_port: '/dev/ttyUSB0'  # OHand 连接的串口号
+  slave_id: 2                 # OHand 的 Modbus 从站 ID
+  send_interval_seconds: 0.05 # 发送指令到 OHand 的时间间隔（秒）
+
+# 视觉角度到 OHand 角度的映射范围
+# 这些是估计值 - 请为您的 OHand 和视觉算法进行校准!
+angle_mapping:
+  # 拇指弯曲的视觉输入范围 (compute_finger_angles_from_visual 输出的经过插值和限制后的值)
+  visual_thumb_bend_input_min: 90
+  visual_thumb_bend_input_max: 165   # 示例值，原为65，可根据拇指插值后的范围调整
+  ohand_thumb_bend_range: [0, 45]  # OHand 拇指弯曲目标角度范围
+
+  # 其他四指弯曲的视觉输入范围 (compute_finger_angles_from_visual 输出的经过插值和限制后的值)
+  visual_other_fingers_bend_input_min: 0
+  visual_other_fingers_bend_input_max: 165
+  ohand_finger_bend_range: [0, 180] # OHand 其他手指弯曲目标角度范围
+
+  # 拇指旋转的视觉输入范围 (compute_thumb_rotation_angle 输出的原始角度值范围)
+  visual_thumb_rot_input_min: -75   # 示例值, 原硬编码为 -90
+  visual_thumb_rot_input_max: 75    # 示例值, 原硬编码为 90
+  ohand_thumb_rot_range: [-45, 135] # OHand 拇指旋转目标角度范围
+
+# MediaPipe Hands 检测设置
+mediapipe_hands_settings:
+  min_detection_confidence: 0.8
+  min_tracking_confidence: 0.5
+  max_num_hands: 1
+
+# Orbbec 摄像头设置
+orbbec_camera_settings:
+  serial_number: '' # 留空则自动检测第一个

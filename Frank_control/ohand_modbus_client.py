@@ -75,8 +75,8 @@ class OHandModbusClient:
         self.slave_id = slave_id
         self.is_connected = False
         # Modbus 标准通常使用大端字节序 (Big Endian)
-        self.byte_order = Endian.Big
-        self.word_order = Endian.Big
+        self.byte_order = Endian.BIG
+        self.word_order = Endian.BIG
 
         # 配置日志记录器 (可选, 用于调试)
         logging.basicConfig()
