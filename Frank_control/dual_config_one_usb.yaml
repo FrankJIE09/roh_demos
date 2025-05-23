@@ -1,0 +1,76 @@
+# OHand 机械手连接设置
+ohand_left_settings: # 左手 OHand 的特定设置
+  serial_port: '/dev/ttyUSB0'  # 机械手连接的串口设备名称 (例如 Linux 上的 /dev/ttyUSB0 或 Windows 上的 COM3)。
+  slave_id: 2                 # 机械手在 Modbus 总线上的从站地址/ID，用于区分同一串口上的不同设备。
+  enabled: true               # 是否启用对这只机械手的控制。如果为 false，程序将忽略这只手。
+
+ohand_right_settings: # 右手 OHand 的特定设置
+  serial_port: '/dev/ttyUSB0' # 机械手连接的串口设备名称。如果两只手在同一物理串口上，这里应设为相同的值。
+  slave_id: 3                 # 机械手在 Modbus 总线上的从站地址/ID。同一串口上的两只手必须有不同的 slave_id。
+  enabled: true               # 是否启用对这只机械手的控制。
+
+# 共享的视觉角度到 OHand 角度的映射参数 (可能已弃用或作为全局默认)
+# 这些是程序中处理后的视觉角度的预期输入范围，
+# 也是 translate_angle 函数将视觉输入映射到机械手输出的基准。
+shared_visual_input_mapping:
+  thumb_bend_input_min: 90
+  thumb_bend_input_max: 165
+  other_fingers_bend_input_min: 0
+  other_fingers_bend_input_max: 165
+  thumb_rot_input_min: 75
+  thumb_rot_input_max: 0
+
+# --- 左手视觉输入映射 ---
+# 定义了从 get_hand_visual_angles 函数输出的“已处理”视觉角度的预期范围，
+# 这些角度将作为左手 translate_angle 函数的输入范围。
+left_visual_input_mapping:
+  thumb_bend_input_min: 90
+  thumb_bend_input_max: 165
+  other_fingers_bend_input_min: 0
+  other_fingers_bend_input_max: 160
+  thumb_rot_input_min: -10
+  thumb_rot_input_max: 10
+
+# --- 右手视觉输入映射 ---
+# 定义了从 get_hand_visual_angles 函数输出的“已处理”视觉角度的预期范围，
+# 这些角度将作为右手 translate_angle 函数的输入范围。
+right_visual_input_mapping:
+  thumb_bend_input_min: 85
+  thumb_bend_input_max: 170
+  other_fingers_bend_input_min: 5
+  other_fingers_bend_input_max: 165
+  thumb_rot_input_min: 10
+  thumb_rot_input_max: -10
+
+# 左手 OHand 的目标角度范围 (机械手实际运动的角度)
+# 注意：以下范围已根据 "OHandModBusRTUProtocol_CN.md" 文档 V1.0 进行更新。
+left_ohand_output_mapping:
+  thumb_bend_range: [2.26, 36.76]   # 左手拇指弯曲范围，单位：度
+  # finger_bend_range 是食指、中指、无名指、小指弯曲范围的交集，单位：度。
+  # 文档范围：食指[100.22, 178.37], 中指[97.81, 176.06], 无名指[101.38, 176.54], 小指[98.84, 174.86]
+  finger_bend_range: [101.38, 174.86]
+  thumb_rot_range: [0, 90]        # 左手拇指旋转范围，单位：度
+
+# 右手 OHand 的目标角度范围 (机械手实际运动的角度)
+# 注意：以下范围已根据 "OHandModBusRTUProtocol_CN.md" 文档 V1.0 进行更新。
+right_ohand_output_mapping:
+  thumb_bend_range: [2.26, 36.76]   # 右手拇指弯曲范围，单位：度
+  # finger_bend_range 是食指、中指、无名指、小指弯曲范围的交集，单位：度。
+  # 文档范围：食指[100.22, 178.37], 中指[97.81, 176.06], 无名指[101.38, 176.54], 小指[98.84, 174.86]
+  finger_bend_range: [101.38, 174.86]
+  thumb_rot_range: [0, 90]        # 右手拇指旋转范围，单位：度
+
+# MediaPipe Hands 检测设置
+mediapipe_hands_settings:
+  min_detection_confidence: 0.7 # 手部检测模型的最小置信度阈值。高于此值才认为检测到了手。范围 [0.0, 1.0]。
+  min_tracking_confidence: 0.6  # 手部关键点跟踪模型的最小置信度阈值。高于此值才认为跟踪成功。范围 [0.0, 1.0]。
+  max_num_hands: 2              # 期望检测到的最大手数。设置为 2 以同时控制两只手。
+
+# Orbbec 摄像头设置
+orbbec_camera_settings:
+  serial_number: '' # Orbbec 摄像头的序列号。如果留空，程序会尝试自动检测并使用找到的第一个摄像头。
+
+# 通用设置
+general_settings:
+  send_interval_seconds: 0.05 # 向 OHand 机械手发送控制指令的时间间隔（单位：秒）。
+                               # 例如，0.05 表示每秒最多发送 20 次指令。
