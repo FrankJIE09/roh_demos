@@ -41,8 +41,8 @@ ORBBEC_CAMERA_SN = None # 设置为 None 将使用找到的第一个设备，或
 # OHand Modbus 配置 (*** 请根据你的实际设置修改 ***)
 OHAND_LEFT_PORT = '/dev/ttyUSB0'     # *** 左手 OHand 连接的串口 ***
 OHAND_LEFT_ID = 2                   # *** 左手 OHand 的 Modbus Slave ID ***
-OHAND_RIGHT_PORT = '/dev/ttyUSB1'    # *** 右手 OHand 连接的串口 ***
-OHAND_RIGHT_ID = 2                  # *** 右手 OHand 的 Modbus Slave ID (必须与左手不同) ***
+OHAND_RIGHT_PORT = '/dev/ttyUSB0'    # *** 右手 OHand 连接的串口 ***
+OHAND_RIGHT_ID = 3                  # *** 右手 OHand 的 Modbus Slave ID (必须与左手不同) ***
 OHAND_BAUDRATE = 115200             # OHand 的 Modbus 波特率
 
 # OHand 逻辑位置范围

@@ -774,7 +774,7 @@ if __name__ == "__main__":
     # --- 配置 ---
     SERIAL_PORT = '/dev/ttyUSB0'  # 在 Linux 上可能是这个，Windows 上可能是 'COMx'
     # SERIAL_PORT = 'COM3'       # Windows 示例
-    SLAVE_ID = 2              # OHand 的 Modbus 从站地址
+    SLAVE_ID = 3              # OHand 的 Modbus 从站地址
 
     # --- 创建客户端实例 ---
     hand = OHandModbusClient(port=SERIAL_PORT, slave_id=SLAVE_ID)

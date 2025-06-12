@@ -100,4 +100,145 @@ python keyboard_control.py
 | OHand 未响应 / `connect failed` | 串口占用、线序错误、ID 冲突 | 检查线缆、电源、串口号、波特率，确保左右手 ID 唯一 |
 | 姿态映射不准确 | 未校准 / 角度范围不匹配 | 重新运行 `calibrate_hand_angles.py` 或调整 `DEFAULT_ANGLE_RANGES` |
 
+# ROH灵巧手 ModBus RTU Slave ID 扫描程序
+
+这个程序用于扫描指定串口上ROH灵巧手设备的ModBus RTU slave ID。
+
+## 功能特点
+
+- 自动扫描指定串口上的所有可能的slave ID
+- 显示找到的设备信息（协议版本、固件版本、硬件版本）
+- 支持自定义扫描范围
+- 支持快速扫描模式
+- 详细的扫描进度显示
+
+## 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+或者手动安装：
+
+```bash
+pip install pymodbus==2.5.3 pyserial==3.5
+```
+
+## 使用方法
+
+### 基本用法
+
+```bash
+# Linux系统
+python scan_modbus_slave_id.py /dev/ttyUSB0
+
+# Windows系统  
+python scan_modbus_slave_id.py COM3
+```
+
+### 高级用法
+
+```bash
+# 指定扫描范围
+python scan_modbus_slave_id.py /dev/ttyUSB0 --start 1 --end 10
+
+# 快速扫描模式（只扫描1-10）
+python scan_modbus_slave_id.py /dev/ttyUSB0 --quick
+
+# 调整超时时间
+python scan_modbus_slave_id.py /dev/ttyUSB0 --timeout 0.2
+```
+
+### 参数说明
+
+- `port`: 串口名称（必需参数）
+  - Linux: `/dev/ttyUSB0`, `/dev/ttyACM0` 等
+  - Windows: `COM1`, `COM3` 等
+- `--start`: 起始slave ID（默认：1）
+- `--end`: 结束slave ID（默认：247）
+- `--timeout`: 查询超时时间，秒（默认：0.1）
+- `--quick`: 快速扫描模式，只扫描1-10
+
+## 示例输出
+
+```
+正在扫描串口 /dev/ttyUSB0 上的ModBus RTU设备...
+扫描范围: slave ID 1 到 247
+通信参数: 115200bps, 8N1
+--------------------------------------------------
+串口连接成功，开始扫描...
+✓ 找到设备! Slave ID: 2, ROH_NODE_ID: 2
+扫描进度: 10/247
+扫描进度: 20/247
+...
+
+============================================================
+扫描结果汇总:
+============================================================
+共找到 1 个设备:
+
+设备 1:
+  Slave ID: 2
+  ROH Node ID: 2
+  协议版本: 1.0
+  固件版本: 2.1
+  硬件版本: 1.0
+```
+
+## 技术说明
+
+### 通信参数
+
+根据ROH灵巧手ModBus RTU协议文档：
+- 波特率：115200 bps
+- 数据位：8
+- 停止位：1
+- 奇偶校验：无
+
+### 检测原理
+
+程序通过尝试读取ROH_NODE_ID寄存器（地址1005）来检测有效的slave ID：
+- 如果读取成功，说明该slave ID上有ROH设备
+- 同时获取设备的版本信息等详细参数
+
+### 注意事项
+
+1. 确保ROH设备已正确连接到串口
+2. 确保串口没有被其他程序占用
+3. 根据实际情况调整超时时间
+4. 如果设备较多，建议使用指定范围扫描以提高效率
+
+## 故障排除
+
+### 常见问题
+
+1. **串口连接失败**
+   - 检查串口名称是否正确
+   - 检查串口权限（Linux下可能需要sudo或添加用户到dialout组）
+   - 确保串口没有被其他程序占用
+
+2. **找不到设备**
+   - 检查设备是否正确连接
+   - 检查设备是否上电
+   - 尝试调整超时时间（--timeout 0.5）
+   - 检查通信线路是否正常
+
+3. **扫描速度慢**
+   - 使用快速扫描模式（--quick）
+   - 指定较小的扫描范围（--start 1 --end 10）
+   - 减小超时时间（但不要设置太小）
+
+### Linux权限问题
+
+如果遇到权限问题，可以：
+
+```bash
+# 方法1：添加用户到dialout组
+sudo usermod -a -G dialout $USER
+# 然后重新登录
+
+# 方法2：临时使用sudo运行
+sudo python scan_modbus_slave_id.py /dev/ttyUSB0
+```
+
 

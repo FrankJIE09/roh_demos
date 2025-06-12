@@ -1,6 +1,6 @@
 # OHand 机械手连接设置
 ohand_left_settings: # 左手 OHand 的特定设置
-  serial_port: '/dev/ttyUSB0'  # 机械手连接的串口设备名称 (例如 Linux 上的 /dev/ttyUSB0 或 Windows 上的 COM3)。
+  serial_port: '/dev/ttyUSB1'  # 机械手连接的串口设备名称 (例如 Linux 上的 /dev/ttyUSB0 或 Windows 上的 COM3)。
   slave_id: 2                 # 机械手在 Modbus 总线上的从站地址/ID，用于区分同一串口上的不同设备。
   enabled: true               # 是否启用对这只机械手的控制。如果为 false，程序将忽略这只手。
 
@@ -15,10 +15,10 @@ ohand_right_settings: # 右手 OHand 的特定设置
 shared_visual_input_mapping:
   thumb_bend_input_min: 90
   thumb_bend_input_max: 165
-  other_fingers_bend_input_min: 0
+  other_fingers_bend_input_min: 60
   other_fingers_bend_input_max: 165
-  thumb_rot_input_min: 75
-  thumb_rot_input_max: 0
+  thumb_rot_input_min: -10
+  thumb_rot_input_max: 10
 
 # --- 左手视觉输入映射 ---
 # 定义了从 get_hand_visual_angles 函数输出的“已处理”视觉角度的预期范围，
@@ -26,8 +26,8 @@ shared_visual_input_mapping:
 left_visual_input_mapping:
   thumb_bend_input_min: 90
   thumb_bend_input_max: 165
-  other_fingers_bend_input_min: 0
-  other_fingers_bend_input_max: 160
+  other_fingers_bend_input_min: 145
+  other_fingers_bend_input_max: 170
   thumb_rot_input_min: -10
   thumb_rot_input_max: 10
 
@@ -37,8 +37,8 @@ left_visual_input_mapping:
 right_visual_input_mapping:
   thumb_bend_input_min: 85
   thumb_bend_input_max: 170
-  other_fingers_bend_input_min: 5
-  other_fingers_bend_input_max: 165
+  other_fingers_bend_input_min: 145
+  other_fingers_bend_input_max: 170
   thumb_rot_input_min: 10
   thumb_rot_input_max: -10
 
