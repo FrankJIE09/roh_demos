@@ -10,6 +10,7 @@ import threading
 import yaml
 import time
 from camera.orbbec_camera import OrbbecCamera, get_serial_numbers, close_connected_cameras
+import os
 
 # 角度计算函数和配置加载函数复用原有逻辑
 
@@ -107,7 +108,11 @@ def compute_finger_angles_from_visual(results, joint_list, config):
 
 class HandAngleServiceNode(object):
     def __init__(self):
-        self.config = load_config('Frank_control/config.yaml')
+        config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
+        config_path = os.path.abspath(config_path)
+        self.config = load_config(config_path)
+        if not self.config:
+            raise RuntimeError(f"配置文件加载失败，请检查 config.yaml 路径和内容！实际尝试路径: {config_path}")
         self.latest_angles = [0, 0, 0, 0, 0, 0]  # [thumb, index, middle, ring, pinky, thumb_rot]
         self.hand_detected = False
         self.lock = threading.Lock()

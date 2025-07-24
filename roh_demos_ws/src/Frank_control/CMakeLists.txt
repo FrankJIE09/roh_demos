@@ -106,10 +106,7 @@ add_service_files(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES Frank_control
-#  CATKIN_DEPENDS message_generation roscpp rospy sensor_msgs std_msgs
-#  DEPENDS system_lib
+  CATKIN_DEPENDS message_runtime roscpp rospy sensor_msgs std_msgs
 )
 
 ###########
@@ -207,3 +204,7 @@ catkin_install_python(PROGRAMS
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+install(DIRECTORY src/camera/
+  DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}/camera
+)
