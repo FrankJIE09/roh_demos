@@ -1,0 +1,8 @@
+---
+float32 thumb_bend
+float32 index_bend
+float32 middle_bend
+float32 ring_bend
+float32 pinky_bend
+float32 thumb_rot
+bool detected 

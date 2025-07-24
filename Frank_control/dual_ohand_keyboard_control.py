@@ -29,7 +29,7 @@ except Exception as e:
 # *** 请根据你的实际硬件连接修改 ***
 OHAND_LEFT_PORT = '/dev/ttyUSB0'     # 左手 OHand 串口
 OHAND_LEFT_ID = 2                   # 左手 OHand Slave ID
-OHAND_RIGHT_PORT = '/dev/ttyUSB1'    # 右手 OHand 串口
+OHAND_RIGHT_PORT = '/dev/ttyUSB0'    # 右手 OHand 串口
 OHAND_RIGHT_ID = 2                  # 右手 OHand Slave ID (必须与左手不同!)
 OHAND_BAUDRATE = 115200             # OHand 波特率
 
@@ -130,7 +130,7 @@ def save_positions_to_file():
         with open(JSON_FILE, 'w', encoding='utf-8') as f: json.dump(saved_positions, f, indent=4)
     except Exception as e: print(f"Error saving poses to '{JSON_FILE}': {e}")
 
-def get_current_hand_positions(client: OHandModbusClient | None):
+def get_current_hand_positions(client: OHandModbusClient):
     """辅助函数：获取单个手的所有手指当前位置。"""
     if not (client and client.is_connected): return None
     current_pos = {}

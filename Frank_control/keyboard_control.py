@@ -111,7 +111,11 @@ def save_current_positions(slot_name):
 
         saved_positions[slot_name] = current_pos
         save_positions_to_file()
-        print(f"当前位置已成功保存到槽位 '{slot_name}': {current_pos}")
+        import numpy as np
+        array =  []
+        for item in current_pos.values():
+            array.append(item)
+        print(f"当前位置已成功保存到槽位 '{slot_name}': {np.array(array)/65535*180}")
 
     except ModbusException as e:
         print(f"错误：保存位置时发生 Modbus 错误: {e}")
