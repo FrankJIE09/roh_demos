@@ -110,6 +110,33 @@ def load_config(config_path='config.yaml'):
 
 # --- 辅助函数 ---
 
+def is_palm_facing_camera(hand_landmarks):
+    """
+    判断掌心是否朝向摄像头。
+    以 WRIST(0), INDEX_MCP(5), PINKY_MCP(17) 三点构成掌心平面，
+    计算法向量Z分量，Z<0认为掌心朝向摄像头。
+    """
+    wrist = np.array([
+        hand_landmarks.landmark[0].x,
+        hand_landmarks.landmark[0].y,
+        hand_landmarks.landmark[0].z
+    ])
+    index_mcp = np.array([
+        hand_landmarks.landmark[5].x,
+        hand_landmarks.landmark[5].y,
+        hand_landmarks.landmark[5].z
+    ])
+    pinky_mcp = np.array([
+        hand_landmarks.landmark[17].x,
+        hand_landmarks.landmark[17].y,
+        hand_landmarks.landmark[17].z
+    ])
+    v1 = index_mcp - wrist
+    v2 = pinky_mcp - wrist
+    palm_normal = np.cross(v1, v2)
+    return palm_normal[2] < 0  # True: 掌心朝向摄像头
+
+
 def translate_angle(value, visual_min, visual_max, ohand_min, ohand_max):
     """
     将一个值从视觉角度范围线性映射到 OHand 角度范围。
@@ -282,6 +309,10 @@ def main():
     print("手部追踪已启动。按 'q' 键退出。")
     last_sent_time = time.time()
 
+    # 设置窗口为全屏，只需设置一次
+    cv2.namedWindow('OHand Visual Control', cv2.WINDOW_NORMAL)
+    cv2.setWindowProperty('OHand Visual Control', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
     try:
         while True:
             color_image, _, _ = camera.get_frames()
@@ -301,25 +332,30 @@ def main():
 
             ohand_target_angles = {}
 
-            if results.multi_hand_landmarks:
-                for hand_landmarks in results.multi_hand_landmarks:  # 虽然通常只处理一个，但保持循环结构
-                    mp_drawing.draw_landmarks(
-                        image, hand_landmarks, mp_hands.HAND_CONNECTIONS,
-                        mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=3),
-                        mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2)
-                    )
-
-                image, visual_bend_angles, visual_thumb_rot_angle = compute_finger_angles_from_visual(image, results,
-                                                                                                      joint_list)
-
+            # === 新增：左右手判断与拇指旋转方向修正 ===
+            if results.multi_hand_landmarks and results.multi_handedness:
+                # 只处理第一只手
+                hand_landmarks = results.multi_hand_landmarks[0]
+                handedness = results.multi_handedness[0]
+                mp_drawing.draw_landmarks(
+                    image, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+                    mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=3),
+                    mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2)
+                )
+                # 计算角度
+                image, visual_bend_angles, visual_thumb_rot_angle = compute_finger_angles_from_visual(image, results, joint_list)
+                # handedness.classification[0].label: 'Left' 或 'Right'
+                if handedness.classification[0].label == 'Left':
+                    visual_thumb_rot_angle = visual_thumb_rot_angle  # 左手先取反
+                if is_palm_facing_camera(hand_landmarks):
+                    visual_thumb_rot_angle = -visual_thumb_rot_angle  # 掌心朝向摄像头再取反
+                # 后续映射与显示
                 if len(visual_bend_angles) == 5:
-                    # 拇指弯曲映射
                     ohand_target_angles[FINGER_THUMB_BEND] = translate_angle(
                         visual_bend_angles[0],
                         VISUAL_THUMB_BEND_INPUT_MIN, VISUAL_THUMB_BEND_INPUT_MAX,
                         OHAND_THUMB_BEND_RANGE[0], OHAND_THUMB_BEND_RANGE[1]
                     )
-                    # 其他手指弯曲映射
                     ohand_target_angles[FINGER_INDEX] = translate_angle(
                         visual_bend_angles[1],
                         VISUAL_OTHER_FINGERS_BEND_INPUT_MIN, VISUAL_OTHER_FINGERS_BEND_INPUT_MAX,
@@ -340,20 +376,79 @@ def main():
                         VISUAL_OTHER_FINGERS_BEND_INPUT_MIN, VISUAL_OTHER_FINGERS_BEND_INPUT_MAX,
                         OHAND_FINGER_BEND_RANGE[0], OHAND_FINGER_BEND_RANGE[1]
                     )
-
-                # 拇指旋转角度的映射和发送
-                if visual_thumb_rot_angle is not None:  # 确保 visual_thumb_rot_angle 有值
+                if visual_thumb_rot_angle is not None:
                     ohand_target_angles[FINGER_THUMB_ROT] = translate_angle(
                         visual_thumb_rot_angle,
                         VISUAL_THUMB_ROT_INPUT_MIN, VISUAL_THUMB_ROT_INPUT_MAX,
                         OHAND_THUMB_ROT_RANGE[0], OHAND_THUMB_ROT_RANGE[1]
                     )
-                    # 在图像上显示最终发送到OHand的拇指旋转角度
                     cv2.putText(image, f"OHandThumbRotTgt: {ohand_target_angles.get(FINGER_THUMB_ROT, 0.0):.1f}",
                                 (10, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 128, 255), 1, cv2.LINE_AA)
-
                 y_offset = 20
-                # 显示发送到OHand的角度 (弯曲)
+                if FINGER_THUMB_BEND in ohand_target_angles:
+                    cv2.putText(image, f"OHandThBend: {ohand_target_angles[FINGER_THUMB_BEND]:.1f}", (10, y_offset),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
+                    y_offset += 20
+                if FINGER_INDEX in ohand_target_angles:
+                    cv2.putText(image, f"OHandIdxBend: {ohand_target_angles[FINGER_INDEX]:.1f}", (10, y_offset),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
+                    y_offset += 20
+                if FINGER_MIDDLE in ohand_target_angles:
+                    cv2.putText(image, f"OHandMidBend: {ohand_target_angles[FINGER_MIDDLE]:.1f}", (10, y_offset),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
+                    y_offset += 20
+                if FINGER_RING in ohand_target_angles:
+                    cv2.putText(image, f"OHandRngBend: {ohand_target_angles[FINGER_RING]:.1f}", (10, y_offset),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
+                    y_offset += 20
+                if FINGER_PINKY in ohand_target_angles:
+                    cv2.putText(image, f"OHandPnkBend: {ohand_target_angles[FINGER_PINKY]:.1f}", (10, y_offset),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
+                    y_offset += 20
+            # === 兼容旧逻辑：如果没有 handedness 信息，保持原有处理方式 ===
+            elif results.multi_hand_landmarks:
+                for hand_landmarks in results.multi_hand_landmarks:
+                    mp_drawing.draw_landmarks(
+                        image, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+                        mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=3),
+                        mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2)
+                    )
+                image, visual_bend_angles, visual_thumb_rot_angle = compute_finger_angles_from_visual(image, results, joint_list)
+                if len(visual_bend_angles) == 5:
+                    ohand_target_angles[FINGER_THUMB_BEND] = translate_angle(
+                        visual_bend_angles[0],
+                        VISUAL_THUMB_BEND_INPUT_MIN, VISUAL_THUMB_BEND_INPUT_MAX,
+                        OHAND_THUMB_BEND_RANGE[0], OHAND_THUMB_BEND_RANGE[1]
+                    )
+                    ohand_target_angles[FINGER_INDEX] = translate_angle(
+                        visual_bend_angles[1],
+                        VISUAL_OTHER_FINGERS_BEND_INPUT_MIN, VISUAL_OTHER_FINGERS_BEND_INPUT_MAX,
+                        OHAND_FINGER_BEND_RANGE[0], OHAND_FINGER_BEND_RANGE[1]
+                    )
+                    ohand_target_angles[FINGER_MIDDLE] = translate_angle(
+                        visual_bend_angles[2],
+                        VISUAL_OTHER_FINGERS_BEND_INPUT_MIN, VISUAL_OTHER_FINGERS_BEND_INPUT_MAX,
+                        OHAND_FINGER_BEND_RANGE[0], OHAND_FINGER_BEND_RANGE[1]
+                    )
+                    ohand_target_angles[FINGER_RING] = translate_angle(
+                        visual_bend_angles[3],
+                        VISUAL_OTHER_FINGERS_BEND_INPUT_MIN, VISUAL_OTHER_FINGERS_BEND_INPUT_MAX,
+                        OHAND_FINGER_BEND_RANGE[0], OHAND_FINGER_BEND_RANGE[1]
+                    )
+                    ohand_target_angles[FINGER_PINKY] = translate_angle(
+                        visual_bend_angles[4],
+                        VISUAL_OTHER_FINGERS_BEND_INPUT_MIN, VISUAL_OTHER_FINGERS_BEND_INPUT_MAX,
+                        OHAND_FINGER_BEND_RANGE[0], OHAND_FINGER_BEND_RANGE[1]
+                    )
+                if visual_thumb_rot_angle is not None:
+                    ohand_target_angles[FINGER_THUMB_ROT] = translate_angle(
+                        visual_thumb_rot_angle,
+                        VISUAL_THUMB_ROT_INPUT_MIN, VISUAL_THUMB_ROT_INPUT_MAX,
+                        OHAND_THUMB_ROT_RANGE[0], OHAND_THUMB_ROT_RANGE[1]
+                    )
+                    cv2.putText(image, f"OHandThumbRotTgt: {ohand_target_angles.get(FINGER_THUMB_ROT, 0.0):.1f}",
+                                (10, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 128, 255), 1, cv2.LINE_AA)
+                y_offset = 20
                 if FINGER_THUMB_BEND in ohand_target_angles:
                     cv2.putText(image, f"OHandThBend: {ohand_target_angles[FINGER_THUMB_BEND]:.1f}", (10, y_offset),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
@@ -389,6 +484,10 @@ def main():
                 last_sent_time = current_time
                 print("-" * 20)
 
+            # 设置窗口大小（可选：取消注释并调整尺寸）
+            # cv2.namedWindow('OHand Visual Control', cv2.WINDOW_NORMAL)
+            # cv2.resizeWindow('OHand Visual Control', 1280, 720)  # 宽度, 高度
+            
             cv2.imshow('OHand Visual Control', image)
 
             if cv2.waitKey(5) & 0xFF == ord('q'):
@@ -409,7 +508,7 @@ def main():
         if ohand and ohand.is_connected:
             print("断开连接前稍微张开手...")
             try:
-                safe_open_angle = 10  # 可以调整
+                safe_open_angle = 180  # 可以调整
                 mid_rot_angle = (OHAND_THUMB_ROT_RANGE[0] + OHAND_THUMB_ROT_RANGE[1]) / 2
 
                 ohand.set_finger_target_angle(FINGER_THUMB_BEND, safe_open_angle)
