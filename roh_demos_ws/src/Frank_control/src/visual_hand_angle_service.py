@@ -1,6 +1,9 @@
-#!/usr/bin/env python
+#!/home/sage/anaconda3/envs/roh_demos/bin/python3.8
 # -*- coding: utf-8 -*-
-
+print("123")
+import sys
+print(f"Python环境路径: {sys.executable}")
+exit()
 import rospy
 from Frank_control.srv import GetHandAngles, GetHandAnglesResponse
 import cv2

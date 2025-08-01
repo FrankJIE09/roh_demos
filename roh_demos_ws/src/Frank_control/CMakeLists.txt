@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  sage_block
 )
 
 ## System dependencies are found with CMake's conventions
@@ -35,7 +36,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## * In the file package.xml:
 ##   * add a build_depend tag for "message_generation"
 ##   * add a build_depend and a exec_depend tag for each package in MSG_DEP_SET
-##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
+##   * If MSG_DEP_SET isn'tempty the following dependency has been pulled in
 ##     but can be declared for certainty nonetheless:
 ##     * add a exec_depend tag for "message_runtime"
 ## * In this file (CMakeLists.txt):
@@ -73,7 +74,8 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
-   sensor_msgs#   std_msgs
+   sensor_msgs
+   std_msgs
 )
 
 ################################################
@@ -106,7 +108,7 @@ add_service_files(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS message_runtime roscpp rospy sensor_msgs std_msgs
+  CATKIN_DEPENDS message_runtime roscpp rospy sensor_msgs std_msgs sage_block
 )
 
 ###########
@@ -116,7 +118,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -135,6 +137,9 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/Frank_control_node.cpp)
 
+## Add GetHandAnglesBlock example executable
+add_executable(hand_angles_example src/hand_angles_example.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -145,10 +150,18 @@ include_directories(
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+## Add dependencies for hand_angles_example
+add_dependencies(hand_angles_example ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+## Link libraries for hand_angles_example
+target_link_libraries(hand_angles_example
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -159,10 +172,10 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-catkin_install_python(PROGRAMS
-  src/visual_hand_angle_service.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# catkin_install_python(PROGRAMS
+#   src/visual_hand_angle_service.py
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
@@ -208,3 +221,12 @@ catkin_install_python(PROGRAMS
 install(DIRECTORY src/camera/
   DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}/camera
 )
+
+# 设置conda环境的Python解释器
+set(CONDA_PYTHON_PATH "/home/sage/anaconda3/envs/roh_demos/bin/python3.8")
+if(EXISTS ${CONDA_PYTHON_PATH})
+    set(PYTHON_EXECUTABLE ${CONDA_PYTHON_PATH})
+    message(STATUS "使用conda环境的Python: ${PYTHON_EXECUTABLE}")
+else()
+    message(WARNING "未找到conda环境Python，使用系统默认Python")
+endif()
