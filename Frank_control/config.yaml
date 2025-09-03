@@ -1,7 +1,7 @@
 # OHand 机械手连接设置
 ohand_settings:
   serial_port: '/dev/ttyUSB0'  # OHand 连接的串口号
-  slave_id: 3                 # OHand 的 Modbus 从站 ID
+  slave_id: 2                 # OHand 的 Modbus 从站 ID
   send_interval_seconds: 0.05 # 发送指令到 OHand 的时间间隔（秒）
 
 # 视觉角度到 OHand 角度的映射范围
