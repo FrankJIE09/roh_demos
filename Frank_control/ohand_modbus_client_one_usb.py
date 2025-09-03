@@ -701,8 +701,8 @@ class OHandModbusClient:
             return None
 
     # --- Convenience methods (examples) ---
-    def get_all_finger_status(self, target_slave_id: int = None): # Added target_slave_id
-        """获取所有手指的状态。"""
+    def get_finger_status_all(self, target_slave_id: int = None): # Added target_slave_id
+        """获取指定从站所有手指的状态。"""
         status_dict = {}
         for i in range(6): # 0 to 5
             try:
@@ -712,8 +712,8 @@ class OHandModbusClient:
                 status_dict[i] = {"code": None, "description": "读取失败"}
         return status_dict
 
-    def get_all_finger_current_positions(self, target_slave_id: int = None): # Added target_slave_id
-        """获取所有手指的当前逻辑位置。"""
+    def get_finger_positions(self, target_slave_id: int = None): # Added target_slave_id
+        """获取指定从站所有手指的当前逻辑位置。"""
         pos_dict = {}
         for i in range(6):
             try:
@@ -723,8 +723,8 @@ class OHandModbusClient:
                 pos_dict[i] = None
         return pos_dict
 
-    def get_all_finger_current_angles(self, target_slave_id: int = None): # Added target_slave_id
-        """获取所有手指的当前角度。"""
+    def get_finger_angles(self, target_slave_id: int = None): # Added target_slave_id
+        """获取指定从站所有手指的当前角度。"""
         angle_dict = {}
         for i in range(6):
             try:
@@ -734,9 +734,9 @@ class OHandModbusClient:
                 angle_dict[i] = None
         return angle_dict
 
-    def set_all_fingers_target_pos(self, positions, target_slave_id: int = None): # Added target_slave_id
+    def set_finger_positions(self, positions, target_slave_id: int = None): # Added target_slave_id
         """
-        使用一次 Modbus 写多个寄存器 (0x10) 指令设置所有手指的目标逻辑位置。
+        使用一次 Modbus 写多个寄存器 (0x10) 指令设置指定从站所有手指的目标逻辑位置。
 
         :param positions: 包含 6 个目标位置值的列表或元组 (对应手指 0-5)。
                           如果列表长度不足 6，则只设置前面的手指。
@@ -787,10 +787,7 @@ class OHandModbusClient:
         hands_status = {}
         for slave_id in self.slave_ids:
             try:
-                status_dict = {}
-                for i in range(6):
-                    code, desc = self.get_finger_status(i, target_slave_id=slave_id)
-                    status_dict[i] = {"code": code, "description": desc}
+                status_dict = self.get_finger_status_all(target_slave_id=slave_id)
                 hands_status[slave_id] = status_dict
             except Exception as e:
                 print(f"获取从站{slave_id}状态失败: {e}")
@@ -802,7 +799,7 @@ class OHandModbusClient:
         hands_positions = {}
         for slave_id in self.slave_ids:
             try:
-                positions = self.get_all_finger_current_positions(target_slave_id=slave_id)
+                positions = self.get_finger_positions(target_slave_id=slave_id)
                 hands_positions[slave_id] = positions
             except Exception as e:
                 print(f"获取从站{slave_id}位置失败: {e}")
@@ -814,7 +811,7 @@ class OHandModbusClient:
         hands_angles = {}
         for slave_id in self.slave_ids:
             try:
-                angles = self.get_all_finger_current_angles(target_slave_id=slave_id)
+                angles = self.get_finger_angles(target_slave_id=slave_id)
                 hands_angles[slave_id] = angles
             except Exception as e:
                 print(f"获取从站{slave_id}角度失败: {e}")
@@ -831,7 +828,7 @@ class OHandModbusClient:
         success_slaves = []
         for slave_id, positions in positions_dict.items():
             try:
-                if self.set_all_fingers_target_pos(positions, target_slave_id=slave_id):
+                if self.set_finger_positions(positions, target_slave_id=slave_id):
                     success_slaves.append(slave_id)
                 else:
                     print(f"设置从站{slave_id}位置失败")
@@ -913,46 +910,7 @@ class OHandModbusClient:
                 print(f"从站{slave_id}执行{action_func}异常: {e}")
         return success_slaves
 
-    # --- 简化的多手控制函数 ---
-    
-    def get_hand_positions(self, slave_id):
-        """
-        读取指定从站ID的手的位置
-        
-        :param slave_id: 从站ID
-        :return: 手指位置数组 [拇指弯曲, 食指, 中指, 无名指, 小指, 拇指旋转] 或 None
-        """
-        try:
-            positions_dict = self.get_all_finger_current_positions(target_slave_id=slave_id)
-            if positions_dict:
-                # 将字典转换为数组，按手指索引顺序
-                positions = [positions_dict.get(i, 0) for i in range(6)]
-                print(f"从站{slave_id}手指位置: {positions}")
-                return positions
-            else:
-                return None
-        except Exception as e:
-            print(f"读取从站{slave_id}位置失败: {e}")
-            return None
-    
-    def set_hand_positions(self, slave_id, positions):
-        """
-        设置指定从站ID的手的位置
-        
-        :param slave_id: 从站ID
-        :param positions: 位置列表 [拇指弯曲, 食指, 中指, 无名指, 小指, 拇指旋转]
-        :return: True 成功, False 失败
-        """
-        try:
-            success = self.set_all_fingers_target_pos(positions, target_slave_id=slave_id)
-            if success:
-                print(f"从站{slave_id}位置设置成功: {positions}")
-            else:
-                print(f"从站{slave_id}位置设置失败")
-            return success
-        except Exception as e:
-            print(f"设置从站{slave_id}位置异常: {e}")
-            return False
+
 
 
 # --- Main program example (keep as is, or remove if this is purely a library file) ---
@@ -1057,16 +1015,17 @@ if __name__ == "__main__":
         print(f"不同动作成功的从站: {success_slaves}")
         time.sleep(3)
 
-        # 示例4: 使用简化的单手控制函数
-        print("\n4. 使用简化的单手控制函数")
+        # 示例4: 使用直接的手指控制函数
+        print("\n4. 使用直接的手指控制函数")
         for slave_id in connected_slaves:
             # 读取位置
-            positions = multi_hand.get_hand_positions(slave_id)
+            positions_dict = multi_hand.get_finger_positions(target_slave_id=slave_id)
+            positions = [positions_dict.get(i, 0) for i in range(6)]
             print(f"从站{slave_id}当前位置: {positions}")
             
             # 设置位置
             new_positions = [32768, 32768, 0, 0, 0, 0]  # 拇指和食指弯曲
-            success = multi_hand.set_hand_positions(slave_id, new_positions)
+            success = multi_hand.set_finger_positions(new_positions, target_slave_id=slave_id)
             if success:
                 print(f"从站{slave_id}新位置设置成功")
             time.sleep(2)
@@ -1074,7 +1033,7 @@ if __name__ == "__main__":
         # 恢复初始状态
         print("\n5. 恢复初始状态")
         for slave_id in connected_slaves:
-            multi_hand.set_hand_positions(slave_id, [0, 0, 0, 0, 0, 0])
+            multi_hand.set_finger_positions([0, 0, 0, 0, 0, 0], target_slave_id=slave_id)
         print("所有从站已恢复初始状态")
 
     except ModbusException as e:
