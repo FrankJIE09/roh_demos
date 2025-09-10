@@ -40,6 +40,93 @@ OHAND_SEND_INTERVAL = 0.0
 # 移除 Orbbec 相机序列号配置
 
 
+def initialize_camera():
+    """初始化摄像头，尝试不同的索引和设置"""
+    # 尝试不同的后端
+    backends = [cv2.CAP_ANY, cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_V4L2]
+    backend_names = ["ANY", "DSHOW", "MSMF", "V4L2"]
+    
+    for backend_idx, backend in enumerate(backends):
+        print(f"尝试后端: {backend_names[backend_idx]}")
+        for camera_index in [0, 1, 2]:
+            print(f"  尝试打开摄像头索引 {camera_index}...")
+            try:
+                camera = cv2.VideoCapture(camera_index, backend)
+                if camera.isOpened():
+                    print(f"摄像头索引 {camera_index} 已打开，设置1920x1080分辨率...")
+                    
+                    # 立即尝试设置1920x1080分辨率
+                    try:
+                        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+                        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+                        camera.set(cv2.CAP_PROP_FPS, 30)  # 提高帧率到30fps
+                        camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # 保持最小缓冲区
+                        
+                        # 验证分辨率设置
+                        actual_width = camera.get(cv2.CAP_PROP_FRAME_WIDTH)
+                        actual_height = camera.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                        print(f"设置后分辨率: {actual_width}x{actual_height}")
+                        
+                    except Exception as e:
+                        print(f"设置分辨率时出错: {e}")
+                    
+                    # 多次尝试读取帧以确保稳定性
+                    success_count = 0
+                    for attempt in range(5):
+                        try:
+                            ret, test_frame = camera.read()
+                            if ret and test_frame is not None and test_frame.size > 0:
+                                success_count += 1
+                                print(f"  尝试 {attempt + 1}: 成功读取帧 {test_frame.shape}")
+                            else:
+                                print(f"  尝试 {attempt + 1}: 读取失败")
+                        except Exception as e:
+                            print(f"  尝试 {attempt + 1}: 异常 {e}")
+                        
+                        time.sleep(0.1)  # 短暂等待
+                    
+                    if success_count >= 3:  # 至少成功3次
+                        print(f"摄像头索引 {camera_index} 启动成功！")
+                        print(f"摄像头分辨率: {test_frame.shape[1]}x{test_frame.shape[0]}")
+                        print(f"摄像头属性设置完成")
+                        return camera
+                    else:
+                        print(f"摄像头索引 {camera_index} 读取不稳定，尝试下一个")
+                        camera.release()
+                else:
+                    print(f"摄像头索引 {camera_index} 无法打开")
+            except Exception as e:
+                print(f"摄像头索引 {camera_index} 初始化错误: {e}")
+                if 'camera' in locals():
+                    camera.release()
+    
+    # 如果所有后端都失败，尝试最简单的初始化
+    print("尝试最简单的摄像头初始化...")
+    try:
+        camera = cv2.VideoCapture(0)
+        if camera.isOpened():
+            # 尝试设置1920x1080
+            try:
+                camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+                camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+                camera.set(cv2.CAP_PROP_FPS, 30)  # 提高帧率到30fps
+                camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # 保持最小缓冲区
+                print("尝试设置1920x1080分辨率...")
+            except Exception as e:
+                print(f"设置分辨率时出错: {e}")
+            
+            ret, test_frame = camera.read()
+            if ret and test_frame is not None and test_frame.size > 0:
+                print(f"简单初始化成功！分辨率: {test_frame.shape[1]}x{test_frame.shape[0]}")
+                return camera
+            else:
+                camera.release()
+    except Exception as e:
+        print(f"简单初始化也失败: {e}")
+    
+    return None
+
+
 def load_config(config_path='config.yaml'):
     """加载配置文件."""
     global OHAND_SERIAL_PORT, OHAND_SLAVE_ID, \
@@ -51,7 +138,7 @@ def load_config(config_path='config.yaml'):
         MP_MAX_NUM_HANDS, OHAND_SEND_INTERVAL
 
     try:
-        with open(config_path, 'r') as file:
+        with open(config_path, 'r', encoding='utf-8') as file:
             config = yaml.safe_load(file)
 
         # OHand 配置
@@ -264,7 +351,8 @@ def main():
     hands = mp_hands.Hands(
         max_num_hands=MP_MAX_NUM_HANDS,
         min_detection_confidence=MP_MIN_DETECTION_CONFIDENCE,
-        min_tracking_confidence=MP_MIN_TRACKING_CONFIDENCE)
+        min_tracking_confidence=MP_MIN_TRACKING_CONFIDENCE,
+        model_complexity=0)  # 使用轻量级模型，减少延迟
     mp_drawing = mp.solutions.drawing_utils
 
     joint_list = [
@@ -283,40 +371,7 @@ def main():
     print("OHand 连接成功。")
 
     print("正在初始化系统默认摄像头...")
-    camera = None
-    
-    # 尝试不同的摄像头索引
-    for camera_index in [0,1]:
-        print(f"尝试打开摄像头索引 {camera_index}...")
-        try:
-            camera = cv2.VideoCapture(camera_index)
-            if camera.isOpened():
-                # 测试是否能读取帧
-                ret, test_frame = camera.read()
-                if ret and test_frame is not None:
-                    print(f"摄像头索引 {camera_index} 启动成功！")
-                    print(f"摄像头分辨率: {test_frame.shape[1]}x{test_frame.shape[0]}")
-                    
-                    # 设置摄像头属性以获得更好的性能
-                    camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-                    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-                    camera.set(cv2.CAP_PROP_FPS, 30)
-                    camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # 减少缓冲区延迟
-                    
-                    print(f"摄像头属性设置完成")
-                    break
-                else:
-                    print(f"摄像头索引 {camera_index} 无法读取帧")
-                    camera.release()
-                    camera = None
-            else:
-                print(f"摄像头索引 {camera_index} 无法打开")
-                camera = None
-        except Exception as e:
-            print(f"摄像头索引 {camera_index} 初始化错误: {e}")
-            if camera:
-                camera.release()
-            camera = None
+    camera = initialize_camera()
     
     if camera is None:
         print("错误：无法打开任何摄像头。请检查摄像头是否连接或被其他程序占用。")
@@ -326,6 +381,11 @@ def main():
 
     print("手部追踪已启动。按 'q' 键退出。")
     last_sent_time = time.time()
+    frame_error_count = 0
+    max_frame_errors = 10  # 最大连续错误次数
+    
+    # 优化发送频率，减少延迟
+    target_send_interval = 0.02  # 20ms发送间隔，50fps
 
     # 设置窗口为全屏，只需设置一次
     cv2.namedWindow('OHand Visual Control', cv2.WINDOW_NORMAL)
@@ -333,20 +393,88 @@ def main():
 
     try:
         while True:
-            ret, color_image = camera.read()
+            try:
+                # 减少延迟，提高响应速度
+                time.sleep(0.016)  # 约60fps，减少延迟
+                ret, color_image = camera.read()
+            except cv2.error as e:
+                frame_error_count += 1
+                print(f"摄像头读取错误: {e} (错误次数: {frame_error_count})")
+                
+                # 尝试重新初始化摄像头
+                if frame_error_count >= 3:  # 降低重连阈值
+                    print("摄像头读取持续失败，尝试重新连接...")
+                    camera.release()
+                    time.sleep(3)  # 增加等待时间
+                    camera = initialize_camera()
+                    if camera is None:
+                        print("无法重新连接摄像头，退出程序。")
+                        break
+                    frame_error_count = 0
+                else:
+                    time.sleep(0.5)  # 增加错误间隔
+                continue
+                
             if not ret or color_image is None:
-                print("错误：无法从摄像头获取帧。")
-                time.sleep(0.1)  # 避免快速循环错误
+                frame_error_count += 1
+                print(f"错误：无法从摄像头获取帧。 (错误次数: {frame_error_count})")
+                if frame_error_count >= max_frame_errors:
+                    print("摄像头连接丢失，尝试重新连接...")
+                    camera.release()
+                    time.sleep(1)
+                    camera = initialize_camera()
+                    if camera is None:
+                        print("无法重新连接摄像头，退出程序。")
+                        break
+                    frame_error_count = 0
+                time.sleep(0.1)
                 continue
 
-            image = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
-            image = cv2.flip(image, 1)
+            # 验证图像数据的有效性
+            if color_image.size == 0 or len(color_image.shape) != 3:
+                frame_error_count += 1
+                print(f"错误：获取到无效的图像数据。 (错误次数: {frame_error_count})")
+                if frame_error_count >= max_frame_errors:
+                    print("摄像头数据异常，尝试重新连接...")
+                    camera.release()
+                    time.sleep(1)
+                    camera = initialize_camera()
+                    if camera is None:
+                        print("无法重新连接摄像头，退出程序。")
+                        break
+                    frame_error_count = 0
+                time.sleep(0.1)
+                continue
 
-            image.flags.writeable = False
-            results = hands.process(image)
+            try:
+                image = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
+                image = cv2.flip(image, 1)
+                frame_error_count = 0  # 重置错误计数
+            except cv2.error as e:
+                frame_error_count += 1
+                print(f"图像处理错误: {e} (错误次数: {frame_error_count})")
+                if frame_error_count >= max_frame_errors:
+                    print("图像处理持续失败，尝试重新连接摄像头...")
+                    camera.release()
+                    time.sleep(1)
+                    camera = initialize_camera()
+                    if camera is None:
+                        print("无法重新连接摄像头，退出程序。")
+                        break
+                    frame_error_count = 0
+                time.sleep(0.1)
+                continue
 
-            image.flags.writeable = True
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            try:
+                image.flags.writeable = False
+                results = hands.process(image)
+
+                image.flags.writeable = True
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            except Exception as e:
+                print(f"MediaPipe处理错误: {e}")
+                time.sleep(0.1)
+                continue
 
             ohand_target_angles = {}
 
@@ -489,7 +617,7 @@ def main():
                     y_offset += 20
 
             current_time = time.time()
-            if ohand_target_angles and (current_time - last_sent_time > OHAND_SEND_INTERVAL):
+            if ohand_target_angles and (current_time - last_sent_time > target_send_interval):
                 print("正在发送角度到 OHand:")
                 for finger_idx, angle_val in ohand_target_angles.items():
                     print(f"  {finger_idx}: {angle_val:.2f} degrees")
@@ -506,9 +634,14 @@ def main():
             # cv2.namedWindow('OHand Visual Control', cv2.WINDOW_NORMAL)
             # cv2.resizeWindow('OHand Visual Control', 1280, 720)  # 宽度, 高度
             
-            cv2.imshow('OHand Visual Control', image)
+            try:
+                cv2.imshow('OHand Visual Control', image)
+            except cv2.error as e:
+                print(f"图像显示错误: {e}")
+                time.sleep(0.1)
+                continue
 
-            if cv2.waitKey(5) & 0xFF == ord('q'):
+            if cv2.waitKey(1) & 0xFF == ord('q'):  # 减少waitKey延迟
                 print("正在退出...")
                 break
 
